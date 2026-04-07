@@ -19,14 +19,19 @@ import {
   type AdminUserUpsertRequest,
   type ChangeLogEntry,
   type Competition,
+  type CompetitionUpsertRequest,
   type Match,
+  type MatchUpsertRequest,
   type Person,
   type PersonProfile,
+  type PersonUpsertRequest,
   type PlayerRanking,
   type SeasonDetail,
   type Sport,
+  type SportUpsertRequest,
   type Team,
   type TeamRoster,
+  type TeamUpsertRequest,
 } from "./lib/api";
 import "./App.css";
 
@@ -93,7 +98,7 @@ function AppShell() {
         setError(
           loadError instanceof Error
             ? loadError.message
-            : "Unable to load the sports platform right now.",
+            : "Unable to load the esports operations platform right now.",
         );
       } finally {
         setLoading(false);
@@ -107,17 +112,17 @@ function AppShell() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand-block">
-          <p className="eyebrow">Sports data aggregation platform</p>
+          <p className="eyebrow">Esports tournament management platform</p>
           <h1>Tornois</h1>
         </div>
 
         <nav className="nav-links">
           <AppNavLink to="/">Home</AppNavLink>
-          <AppNavLink to="/sports">Sports</AppNavLink>
-          <AppNavLink to="/competitions">Competitions</AppNavLink>
+          <AppNavLink to="/sports">Games</AppNavLink>
+          <AppNavLink to="/competitions">Tournaments</AppNavLink>
           <AppNavLink to="/teams">Teams</AppNavLink>
           <AppNavLink to="/players">Players</AppNavLink>
-          <AppNavLink to="/matches">Matches</AppNavLink>
+          <AppNavLink to="/matches">Series</AppNavLink>
         </nav>
 
         <div className="auth-strip">
@@ -144,13 +149,13 @@ function AppShell() {
       <main className="layout">
         {loading ? (
           <StatePanel
-            title="Loading platform data"
-            message="Fetching sports, fixtures, teams, and rankings..."
+            title="Loading tournament data"
+            message="Fetching game titles, brackets, teams, streams, and rankings..."
           />
         ) : error ? (
           <StatePanel
             title="Backend not reachable"
-            message={`${error} Start the API on http://localhost:5000 to enable live data.`}
+            message={`${error} Start the API on http://localhost:5000 to enable tournament data.`}
           />
         ) : (
           <Routes>
@@ -234,29 +239,32 @@ function AppNavLink({ to, children }: { to: string; children: ReactNode }) {
 
 function HomePage({ data }: { data: DashboardData }) {
   const stats = [
-    { label: "Sports", value: data.sports.length },
-    { label: "Competitions", value: data.competitions.length },
-    { label: "Live matches", value: data.liveMatches.length },
-    { label: "Tracked players", value: data.people.length },
+    { label: "Game titles", value: data.sports.length },
+    { label: "Tournaments", value: data.competitions.length },
+    { label: "Live series", value: data.liveMatches.length },
+    { label: "Registered players", value: data.people.length },
   ];
 
   return (
     <div className="page-stack">
       <section className="hero-panel">
         <div>
-          <p className="eyebrow">Unified competition hub</p>
-          <h2>Browse leagues, live fixtures, rosters, and player profiles.</h2>
+          <p className="eyebrow">Competitive gaming operations hub</p>
+          <h2>
+            Manage tournaments, rosters, streams, and live series in one place.
+          </h2>
           <p className="muted-text">
-            This MVP connects the React frontend with the ASP.NET API and covers
-            public browsing plus JWT-based admin access.
+            This MVP keeps the current ASP.NET + React architecture while
+            repositioning Tornois as an esports tournament management platform
+            for organizers and admins.
           </p>
         </div>
         <div className="hero-actions">
           <Link className="button-primary" to="/matches">
-            View live matches
+            View live series
           </Link>
           <Link className="button-secondary" to="/sports">
-            Explore sports
+            Explore game titles
           </Link>
         </div>
         <div className="stats-grid">
@@ -272,7 +280,7 @@ function HomePage({ data }: { data: DashboardData }) {
       <section className="panel">
         <SectionHeading
           title="Live now"
-          subtitle="Currently tracked fixtures across the platform"
+          subtitle="Current esports series and stream-ready match blocks"
         />
         <div className="card-grid">
           {data.liveMatches.map((match) => (
@@ -284,8 +292,8 @@ function HomePage({ data }: { data: DashboardData }) {
       <section className="two-column">
         <div className="panel">
           <SectionHeading
-            title="Sports overview"
-            subtitle="Start from a sport and drill down into its competitions"
+            title="Game catalog"
+            subtitle="Start from a title and drill down into its active tournament circuit"
           />
           <div className="card-grid compact-grid">
             {data.sports.map((sport) => (
@@ -297,7 +305,9 @@ function HomePage({ data }: { data: DashboardData }) {
                 <h3>{sport.name}</h3>
                 <p className="muted-text">{sport.description}</p>
                 <span className="chip">
-                  {sport.isOlympic ? "Olympic sport" : "Specialised circuit"}
+                  {sport.isOlympic
+                    ? "Publisher-backed circuit"
+                    : "Open tournament ecosystem"}
                 </span>
               </Link>
             ))}
@@ -306,8 +316,8 @@ function HomePage({ data }: { data: DashboardData }) {
 
         <div className="panel">
           <SectionHeading
-            title="Upcoming fixtures"
-            subtitle="Next games scheduled in the feed"
+            title="Upcoming series"
+            subtitle="Next matchups scheduled in the tournament calendar"
           />
           <div className="stack-list">
             {data.upcomingMatches.map((match) => (
@@ -342,8 +352,8 @@ function SportsDirectoryPage({
   return (
     <section className="panel">
       <SectionHeading
-        title="Sports"
-        subtitle="Public catalogue of supported sports and their competitive leagues"
+        title="Game titles"
+        subtitle="Supported esports titles and the tournament circuits built around them"
       />
       <div className="card-grid">
         {sports.map((sport) => {
@@ -386,8 +396,8 @@ function SportDetailPage({
   if (!sport) {
     return (
       <StatePanel
-        title="Sport not found"
-        message="Pick a sport from the directory to continue."
+        title="Game title not found"
+        message="Pick a title from the directory to continue."
       />
     );
   }
@@ -425,8 +435,8 @@ function CompetitionsDirectoryPage({
   return (
     <section className="panel">
       <SectionHeading
-        title="Competitions"
-        subtitle="League and cup competitions currently available for browsing"
+        title="Tournaments"
+        subtitle="League stages, qualifiers, and international events currently available for browsing"
       />
       <div className="card-grid">
         {competitions.map((competition) => (
@@ -437,7 +447,7 @@ function CompetitionsDirectoryPage({
           >
             <h3>{competition.name}</h3>
             <p className="muted-text">{competition.country}</p>
-            <span className="chip">{competition.isCup ? "Cup" : "League"}</span>
+            <span className="chip">{competition.format}</span>
           </Link>
         ))}
       </div>
@@ -486,8 +496,8 @@ function CompetitionDetailPage() {
   if (loading) {
     return (
       <StatePanel
-        title="Loading competition"
-        message="Fetching season and ranking information..."
+        title="Loading tournament"
+        message="Fetching stage standings and player rankings..."
       />
     );
   }
@@ -495,8 +505,8 @@ function CompetitionDetailPage() {
   if (error || !seasonDetail) {
     return (
       <StatePanel
-        title="Competition unavailable"
-        message={error ?? "The requested competition could not be found."}
+        title="Tournament unavailable"
+        message={error ?? "The requested tournament could not be found."}
       />
     );
   }
@@ -538,8 +548,8 @@ function CompetitionDetailPage() {
 
       <section className="panel">
         <SectionHeading
-          title="Player rankings"
-          subtitle="Current leaders from this competition"
+          title="Player leaderboards"
+          subtitle="Current top performers from this tournament"
         />
         <div className="stack-list">
           {rankings.map((entry) => (
@@ -566,7 +576,7 @@ function TeamsDirectoryPage({ teams }: { teams: Team[] }) {
     <section className="panel">
       <SectionHeading
         title="Teams"
-        subtitle="Browse clubs and squads with roster detail pages"
+        subtitle="Browse esports organizations and their active rosters"
       />
       <div className="card-grid">
         {teams.map((team) => (
@@ -611,7 +621,7 @@ function TeamDetailPage() {
     return (
       <StatePanel
         title="Loading roster"
-        message="Fetching team members and details..."
+        message="Fetching players, staff roles, and team details..."
       />
     );
   }
@@ -655,7 +665,7 @@ function PlayersDirectoryPage({ people }: { people: Person[] }) {
     <section className="panel">
       <SectionHeading
         title="Players & staff"
-        subtitle="Search-ready directory of tracked people profiles"
+        subtitle="Search-ready directory of players, coaches, and tournament staff"
       />
       <div className="card-grid">
         {people.map((person) => (
@@ -704,7 +714,7 @@ function PlayerDetailPage() {
     return (
       <StatePanel
         title="Loading player profile"
-        message="Fetching biography and team details..."
+        message="Fetching biography, role, and roster details..."
       />
     );
   }
@@ -726,7 +736,7 @@ function PlayerDetailPage() {
       />
       <div className="info-grid">
         <div>
-          <p className="muted-text">Nationality</p>
+          <p className="muted-text">Nationality / region</p>
           <strong>{profile.person.nationality}</strong>
         </div>
         <div>
@@ -734,7 +744,7 @@ function PlayerDetailPage() {
           <strong>{formatDate(profile.person.birthDate)}</strong>
         </div>
         <div>
-          <p className="muted-text">Shirt number</p>
+          <p className="muted-text">Jersey / slot</p>
           <strong>{profile.person.shirtNumber ?? "—"}</strong>
         </div>
       </div>
@@ -754,8 +764,8 @@ function MatchesPage({
     <div className="page-stack">
       <section className="panel">
         <SectionHeading
-          title="Live matches"
-          subtitle="Real-time scoreboard feed from the platform"
+          title="Live series"
+          subtitle="Real-time scoreboard and tournament control feed"
         />
         <div className="card-grid">
           {liveMatches.map((match) => (
@@ -766,8 +776,8 @@ function MatchesPage({
 
       <section className="panel">
         <SectionHeading
-          title="Upcoming fixtures"
-          subtitle="Scheduled games and kickoff information"
+          title="Upcoming series"
+          subtitle="Scheduled matchups and stage start times"
         />
         <div className="stack-list">
           {upcomingMatches.map((match) => (
@@ -820,8 +830,8 @@ function MatchDetailPage() {
   if (loading) {
     return (
       <StatePanel
-        title="Loading match detail"
-        message="Fetching fixture timeline and score data..."
+        title="Loading series detail"
+        message="Fetching round timeline and live event data..."
       />
     );
   }
@@ -829,8 +839,8 @@ function MatchDetailPage() {
   if (error || !detail) {
     return (
       <StatePanel
-        title="Match unavailable"
-        message={error ?? "The selected fixture could not be found."}
+        title="Series unavailable"
+        message={error ?? "The selected series could not be found."}
       />
     );
   }
@@ -894,7 +904,7 @@ function AdminLoginPage() {
     <section className="panel narrow-panel">
       <SectionHeading
         title="Admin login"
-        subtitle="JWT authentication for protected management views"
+        subtitle="JWT authentication for tournament operations and staff access"
       />
       <form className="form-stack" onSubmit={onSubmit}>
         <label>
@@ -930,6 +940,13 @@ function AdminDashboardPage() {
   const { session } = useAuth();
   const [changes, setChanges] = useState<ChangeLogEntry[]>([]);
   const [admins, setAdmins] = useState<AdminIdentity[]>([]);
+  const [managedSports, setManagedSports] = useState<Sport[]>([]);
+  const [managedCompetitions, setManagedCompetitions] = useState<Competition[]>(
+    [],
+  );
+  const [managedTeams, setManagedTeams] = useState<Team[]>([]);
+  const [managedPeople, setManagedPeople] = useState<Person[]>([]);
+  const [managedMatches, setManagedMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -940,69 +957,433 @@ function AdminDashboardPage() {
     password: "",
     isActive: true,
   });
+  const [sportForm, setSportForm] = useState<
+    { id: number | null } & SportUpsertRequest
+  >({
+    id: null,
+    name: "",
+    slug: "",
+    description: "",
+    isOlympic: false,
+  });
+  const [competitionForm, setCompetitionForm] = useState<
+    { id: number | null } & CompetitionUpsertRequest
+  >({
+    id: null,
+    sportId: 1,
+    name: "",
+    country: "",
+    format: "League",
+    isCup: false,
+    seasonName: "2026",
+    yearStart: 2026,
+    yearEnd: 2026,
+    isCurrent: true,
+  });
+  const [teamForm, setTeamForm] = useState<
+    { id: number | null } & TeamUpsertRequest
+  >({
+    id: null,
+    sportId: 1,
+    name: "",
+    shortName: "",
+    country: "",
+    venue: "",
+    founded: 2020,
+    badgeUrl: "",
+  });
+  const [personForm, setPersonForm] = useState<
+    { id: number | null } & PersonUpsertRequest
+  >({
+    id: null,
+    fullName: "",
+    firstName: "",
+    lastName: "",
+    nationality: "",
+    birthDate: "2000-01-01",
+    primaryRole: "",
+    bio: "",
+    photoUrl: "",
+    teamId: null,
+    shirtNumber: null,
+    squadRole: "Starter",
+  });
+  const [matchForm, setMatchForm] = useState<
+    { id: number | null } & MatchUpsertRequest
+  >({
+    id: null,
+    competitionId: 101,
+    seasonId: null,
+    homeTeamId: 1,
+    awayTeamId: 2,
+    kickoffUtc: toDateTimeLocalInputValue(
+      new Date(Date.now() + 86_400_000).toISOString(),
+    ),
+    status: "Scheduled",
+    homeScore: 0,
+    awayScore: 0,
+    venue: "",
+  });
 
   const isSuperadmin = session?.user.role === "superadmin";
 
-  useEffect(() => {
-    const load = async () => {
-      if (!session) {
-        return;
-      }
+  const resetSportForm = () =>
+    setSportForm({
+      id: null,
+      name: "",
+      slug: "",
+      description: "",
+      isOlympic: false,
+    });
 
-      try {
-        const [auditEntries, adminUsers] = await Promise.all([
-          api.getAdminChanges(session.token),
-          isSuperadmin ? api.getAdminUsers(session.token) : Promise.resolve([]),
-        ]);
+  const resetCompetitionForm = () =>
+    setCompetitionForm({
+      id: null,
+      sportId: managedSports[0]?.id ?? 1,
+      name: "",
+      country: "",
+      format: "League",
+      isCup: false,
+      seasonName: "2026",
+      yearStart: 2026,
+      yearEnd: 2026,
+      isCurrent: true,
+    });
 
-        setChanges(auditEntries);
-        setAdmins(adminUsers);
-      } catch (loadError) {
-        setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Unable to load admin activity.",
-        );
-      } finally {
+  const resetTeamForm = () =>
+    setTeamForm({
+      id: null,
+      sportId: managedSports[0]?.id ?? 1,
+      name: "",
+      shortName: "",
+      country: "",
+      venue: "",
+      founded: 2020,
+      badgeUrl: "",
+    });
+
+  const resetPersonForm = () =>
+    setPersonForm({
+      id: null,
+      fullName: "",
+      firstName: "",
+      lastName: "",
+      nationality: "",
+      birthDate: "2000-01-01",
+      primaryRole: "",
+      bio: "",
+      photoUrl: "",
+      teamId: null,
+      shirtNumber: null,
+      squadRole: "Starter",
+    });
+
+  const resetMatchForm = () =>
+    setMatchForm({
+      id: null,
+      competitionId: managedCompetitions[0]?.id ?? 101,
+      seasonId: null,
+      homeTeamId: managedTeams[0]?.id ?? 1,
+      awayTeamId: managedTeams[1]?.id ?? managedTeams[0]?.id ?? 1,
+      kickoffUtc: toDateTimeLocalInputValue(
+        new Date(Date.now() + 86_400_000).toISOString(),
+      ),
+      status: "Scheduled",
+      homeScore: 0,
+      awayScore: 0,
+      venue: "",
+    });
+
+  const loadDashboard = async (showLoadingState = false) => {
+    if (!session) {
+      return;
+    }
+
+    if (showLoadingState) {
+      setLoading(true);
+    }
+
+    try {
+      const [
+        auditEntries,
+        adminUsers,
+        sports,
+        competitions,
+        teams,
+        people,
+        liveMatches,
+        upcomingMatches,
+      ] = await Promise.all([
+        api.getAdminChanges(session.token),
+        isSuperadmin ? api.getAdminUsers(session.token) : Promise.resolve([]),
+        api.getSports(),
+        api.getCompetitions(),
+        api.getTeams(),
+        api.searchPeople(""),
+        api.getLiveMatches(),
+        api.getUpcomingMatches(),
+      ]);
+
+      setChanges(auditEntries);
+      setAdmins(adminUsers);
+      setManagedSports(sports.items);
+      setManagedCompetitions(competitions.items);
+      setManagedTeams(teams.items);
+      setManagedPeople(people.items);
+      setManagedMatches(mergeMatches(liveMatches, upcomingMatches));
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load tournament management data.",
+      );
+    } finally {
+      if (showLoadingState) {
         setLoading(false);
       }
-    };
+    }
+  };
 
-    void load();
+  useEffect(() => {
+    void loadDashboard(true);
   }, [isSuperadmin, session]);
 
   if (!session) {
     return null;
   }
 
-  const handleCreateAdmin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const runMutation = async (
+    action: () => Promise<void>,
+    message: string,
+    reset?: () => void,
+  ) => {
     setError(null);
     setSuccessMessage(null);
 
     try {
-      const createdUser = await api.upsertAdminUser(session.token, formState);
-      setAdmins((current) => {
-        const others = current.filter(
-          (entry) => entry.userName !== createdUser.userName,
-        );
-        return [...others, createdUser].sort((left, right) =>
-          left.userName.localeCompare(right.userName),
-        );
-      });
-      setFormState({
-        userName: "",
-        displayName: "",
-        role: "readonly",
-        password: "",
-        isActive: true,
-      });
-      setSuccessMessage(`Saved admin user ${createdUser.userName}.`);
-    } catch (saveError) {
+      await action();
+      if (reset) {
+        reset();
+      }
+      await loadDashboard(false);
+      setSuccessMessage(message);
+    } catch (mutationError) {
       setError(
-        saveError instanceof Error
-          ? saveError.message
-          : "Unable to save admin user.",
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to save tournament changes.",
+      );
+    }
+  };
+
+  const handleCreateAdmin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    await runMutation(
+      async () => {
+        const createdUser = await api.upsertAdminUser(session.token, formState);
+        setAdmins((current) => {
+          const others = current.filter(
+            (entry) => entry.userName !== createdUser.userName,
+          );
+          return [...others, createdUser].sort((left, right) =>
+            left.userName.localeCompare(right.userName),
+          );
+        });
+      },
+      `Saved admin user ${formState.userName}.`,
+      () =>
+        setFormState({
+          userName: "",
+          displayName: "",
+          role: "readonly",
+          password: "",
+          isActive: true,
+        }),
+    );
+  };
+
+  const handleSaveSport = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const payload: SportUpsertRequest = {
+      name: sportForm.name,
+      slug: sportForm.slug,
+      description: sportForm.description,
+      isOlympic: sportForm.isOlympic,
+    };
+
+    await runMutation(
+      async () => {
+        if (sportForm.id) {
+          await api.updateSport(session.token, sportForm.id, payload);
+        } else {
+          await api.createSport(session.token, payload);
+        }
+      },
+      `Saved game title ${sportForm.name}.`,
+      resetSportForm,
+    );
+  };
+
+  const handleSaveCompetition = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const payload: CompetitionUpsertRequest = {
+      sportId: competitionForm.sportId,
+      name: competitionForm.name,
+      country: competitionForm.country,
+      format: competitionForm.format,
+      isCup: competitionForm.isCup,
+      seasonName: competitionForm.seasonName,
+      yearStart: competitionForm.yearStart,
+      yearEnd: competitionForm.yearEnd,
+      isCurrent: competitionForm.isCurrent,
+    };
+
+    await runMutation(
+      async () => {
+        if (competitionForm.id) {
+          await api.updateCompetition(
+            session.token,
+            competitionForm.id,
+            payload,
+          );
+        } else {
+          await api.createCompetition(session.token, payload);
+        }
+      },
+      `Saved tournament ${competitionForm.name}.`,
+      resetCompetitionForm,
+    );
+  };
+
+  const handleSaveTeam = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const payload: TeamUpsertRequest = {
+      sportId: teamForm.sportId,
+      name: teamForm.name,
+      shortName: teamForm.shortName,
+      country: teamForm.country,
+      venue: teamForm.venue,
+      founded: teamForm.founded,
+      badgeUrl: teamForm.badgeUrl,
+    };
+
+    await runMutation(
+      async () => {
+        if (teamForm.id) {
+          await api.updateTeam(session.token, teamForm.id, payload);
+        } else {
+          await api.createTeam(session.token, payload);
+        }
+      },
+      `Saved team ${teamForm.name}.`,
+      resetTeamForm,
+    );
+  };
+
+  const handleSavePerson = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const payload: PersonUpsertRequest = {
+      fullName: personForm.fullName,
+      firstName: personForm.firstName,
+      lastName: personForm.lastName,
+      nationality: personForm.nationality,
+      birthDate: personForm.birthDate,
+      primaryRole: personForm.primaryRole,
+      bio: personForm.bio,
+      photoUrl: personForm.photoUrl,
+      teamId: personForm.teamId,
+      shirtNumber: personForm.shirtNumber,
+      squadRole: personForm.squadRole,
+    };
+
+    await runMutation(
+      async () => {
+        if (personForm.id) {
+          await api.updatePerson(session.token, personForm.id, payload);
+        } else {
+          await api.createPerson(session.token, payload);
+        }
+      },
+      `Saved profile ${personForm.fullName}.`,
+      resetPersonForm,
+    );
+  };
+
+  const handleSaveMatch = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const payload: MatchUpsertRequest = {
+      competitionId: matchForm.competitionId,
+      seasonId: matchForm.seasonId,
+      homeTeamId: matchForm.homeTeamId,
+      awayTeamId: matchForm.awayTeamId,
+      kickoffUtc: new Date(matchForm.kickoffUtc).toISOString(),
+      status: matchForm.status,
+      homeScore: matchForm.homeScore,
+      awayScore: matchForm.awayScore,
+      venue: matchForm.venue,
+    };
+
+    await runMutation(
+      async () => {
+        if (matchForm.id) {
+          await api.updateMatch(session.token, matchForm.id, payload);
+        } else {
+          await api.createMatch(session.token, payload);
+        }
+      },
+      `Saved series schedule and scoreline.`,
+      resetMatchForm,
+    );
+  };
+
+  const handleEditCompetition = async (competition: Competition) => {
+    try {
+      const seasons = await api.getCompetitionSeasons(competition.id);
+      const season = seasons.items[0];
+      setCompetitionForm({
+        id: competition.id,
+        sportId: competition.sportId,
+        name: competition.name,
+        country: competition.country,
+        format: competition.format,
+        isCup: competition.isCup,
+        seasonName: season?.name ?? "2026",
+        yearStart: season?.yearStart ?? 2026,
+        yearEnd: season?.yearEnd ?? 2026,
+        isCurrent: season?.isCurrent ?? true,
+      });
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load tournament details.",
+      );
+    }
+  };
+
+  const handleEditPerson = async (person: Person) => {
+    try {
+      const profile = await api.getPerson(person.id);
+      setPersonForm({
+        id: person.id,
+        fullName: profile.person.fullName,
+        firstName: profile.person.fullName.split(" ")[0] ?? "",
+        lastName: profile.person.fullName.split(" ").slice(1).join(" ") ?? "",
+        nationality: profile.person.nationality,
+        birthDate: profile.person.birthDate,
+        primaryRole: profile.person.role,
+        bio: profile.bio,
+        photoUrl: profile.person.photoUrl,
+        teamId: profile.person.teamId > 0 ? profile.person.teamId : null,
+        shirtNumber: profile.person.shirtNumber,
+        squadRole: "Starter",
+      });
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load roster profile.",
       );
     }
   };
@@ -1012,7 +1393,7 @@ function AdminDashboardPage() {
       <section className="panel">
         <SectionHeading
           title="Admin dashboard"
-          subtitle="Protected operational overview for authenticated users"
+          subtitle="Protected operational overview for tournament organizers and staff"
         />
         <div className="info-grid">
           <div>
@@ -1028,13 +1409,15 @@ function AdminDashboardPage() {
             <strong>{formatKickoff(session.expiresAtUtc)}</strong>
           </div>
         </div>
+        {successMessage ? <p className="muted-text">{successMessage}</p> : null}
+        {error ? <p className="error-text">{error}</p> : null}
       </section>
 
       {isSuperadmin ? (
         <section className="panel">
           <SectionHeading
             title="Admin user management"
-            subtitle="Create or update superadmin, editor, and readonly accounts"
+            subtitle="Create or update organizer, editor, and viewer accounts"
           />
           <div className="two-column">
             <form className="form-stack" onSubmit={handleCreateAdmin}>
@@ -1099,9 +1482,6 @@ function AdminDashboardPage() {
               <button className="button-primary" type="submit">
                 Save admin user
               </button>
-              {successMessage ? (
-                <p className="muted-text">{successMessage}</p>
-              ) : null}
             </form>
 
             <div className="stack-list">
@@ -1121,13 +1501,913 @@ function AdminDashboardPage() {
 
       <section className="panel">
         <SectionHeading
+          title="Tournament control center"
+          subtitle="Full CRUD operations for game titles, tournaments, teams, players, and series"
+        />
+        {loading ? (
+          <p className="muted-text">Loading management tools...</p>
+        ) : (
+          <div className="management-grid">
+            <ManagementCard
+              title="Game titles"
+              subtitle="Create and maintain the esports titles available on the platform"
+            >
+              <form className="form-stack" onSubmit={handleSaveSport}>
+                <label>
+                  <span>Name</span>
+                  <input
+                    className="input"
+                    value={sportForm.name}
+                    onChange={(event) =>
+                      setSportForm((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>Slug</span>
+                  <input
+                    className="input"
+                    value={sportForm.slug}
+                    onChange={(event) =>
+                      setSportForm((current) => ({
+                        ...current,
+                        slug: event.target.value.toLowerCase(),
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>Description</span>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={sportForm.description}
+                    onChange={(event) =>
+                      setSportForm((current) => ({
+                        ...current,
+                        description: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>Publisher-backed circuit</span>
+                  <select
+                    className="input"
+                    value={sportForm.isOlympic ? "yes" : "no"}
+                    onChange={(event) =>
+                      setSportForm((current) => ({
+                        ...current,
+                        isOlympic: event.target.value === "yes",
+                      }))
+                    }
+                  >
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+                <div className="inline-actions">
+                  <button className="button-primary" type="submit">
+                    {sportForm.id ? "Update title" : "Create title"}
+                  </button>
+                  <button
+                    className="button-ghost"
+                    onClick={resetSportForm}
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </form>
+              <div className="stack-list">
+                {managedSports.map((sport) => (
+                  <div className="list-row" key={sport.id}>
+                    <div>
+                      <strong>{sport.name}</strong>
+                      <p className="muted-text">{sport.description}</p>
+                    </div>
+                    <div className="inline-actions">
+                      <button
+                        className="button-secondary"
+                        onClick={() =>
+                          setSportForm({
+                            id: sport.id,
+                            name: sport.name,
+                            slug: sport.slug,
+                            description: sport.description,
+                            isOlympic: sport.isOlympic,
+                          })
+                        }
+                        type="button"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="button-danger"
+                        onClick={() => {
+                          if (!window.confirm(`Delete ${sport.name}?`)) {
+                            return;
+                          }
+
+                          void runMutation(
+                            () => api.deleteSport(session.token, sport.id),
+                            `Deleted ${sport.name}.`,
+                            resetSportForm,
+                          );
+                        }}
+                        type="button"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ManagementCard>
+
+            <ManagementCard
+              title="Tournaments"
+              subtitle="Manage leagues, stages, and the current competitive season"
+            >
+              <form className="form-stack" onSubmit={handleSaveCompetition}>
+                <label>
+                  <span>Game title</span>
+                  <select
+                    className="input"
+                    value={competitionForm.sportId}
+                    onChange={(event) =>
+                      setCompetitionForm((current) => ({
+                        ...current,
+                        sportId: Number(event.target.value),
+                      }))
+                    }
+                  >
+                    {managedSports.map((sport) => (
+                      <option key={sport.id} value={sport.id}>
+                        {sport.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Tournament name</span>
+                  <input
+                    className="input"
+                    value={competitionForm.name}
+                    onChange={(event) =>
+                      setCompetitionForm((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Region</span>
+                    <input
+                      className="input"
+                      value={competitionForm.country}
+                      onChange={(event) =>
+                        setCompetitionForm((current) => ({
+                          ...current,
+                          country: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Format</span>
+                    <input
+                      className="input"
+                      value={competitionForm.format}
+                      onChange={(event) =>
+                        setCompetitionForm((current) => ({
+                          ...current,
+                          format: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Season / stage</span>
+                    <input
+                      className="input"
+                      value={competitionForm.seasonName}
+                      onChange={(event) =>
+                        setCompetitionForm((current) => ({
+                          ...current,
+                          seasonName: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Is cup event</span>
+                    <select
+                      className="input"
+                      value={competitionForm.isCup ? "yes" : "no"}
+                      onChange={(event) =>
+                        setCompetitionForm((current) => ({
+                          ...current,
+                          isCup: event.target.value === "yes",
+                        }))
+                      }
+                    >
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Start year</span>
+                    <input
+                      className="input"
+                      type="number"
+                      value={competitionForm.yearStart}
+                      onChange={(event) =>
+                        setCompetitionForm((current) => ({
+                          ...current,
+                          yearStart: Number(event.target.value),
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>End year</span>
+                    <input
+                      className="input"
+                      type="number"
+                      value={competitionForm.yearEnd}
+                      onChange={(event) =>
+                        setCompetitionForm((current) => ({
+                          ...current,
+                          yearEnd: Number(event.target.value),
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="inline-actions">
+                  <button className="button-primary" type="submit">
+                    {competitionForm.id
+                      ? "Update tournament"
+                      : "Create tournament"}
+                  </button>
+                  <button
+                    className="button-ghost"
+                    onClick={resetCompetitionForm}
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </form>
+              <div className="stack-list">
+                {managedCompetitions.map((competition) => (
+                  <div className="list-row" key={competition.id}>
+                    <div>
+                      <strong>{competition.name}</strong>
+                      <p className="muted-text">
+                        {competition.sport} · {competition.country} ·{" "}
+                        {competition.format}
+                      </p>
+                    </div>
+                    <div className="inline-actions">
+                      <button
+                        className="button-secondary"
+                        onClick={() => {
+                          void handleEditCompetition(competition);
+                        }}
+                        type="button"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="button-danger"
+                        onClick={() => {
+                          if (!window.confirm(`Delete ${competition.name}?`)) {
+                            return;
+                          }
+
+                          void runMutation(
+                            () =>
+                              api.deleteCompetition(
+                                session.token,
+                                competition.id,
+                              ),
+                            `Deleted ${competition.name}.`,
+                            resetCompetitionForm,
+                          );
+                        }}
+                        type="button"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ManagementCard>
+
+            <ManagementCard
+              title="Teams"
+              subtitle="Register organizations, brand info, and team headquarters"
+            >
+              <form className="form-stack" onSubmit={handleSaveTeam}>
+                <label>
+                  <span>Game title</span>
+                  <select
+                    className="input"
+                    value={teamForm.sportId}
+                    onChange={(event) =>
+                      setTeamForm((current) => ({
+                        ...current,
+                        sportId: Number(event.target.value),
+                      }))
+                    }
+                  >
+                    {managedSports.map((sport) => (
+                      <option key={sport.id} value={sport.id}>
+                        {sport.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Team name</span>
+                    <input
+                      className="input"
+                      value={teamForm.name}
+                      onChange={(event) =>
+                        setTeamForm((current) => ({
+                          ...current,
+                          name: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Short name</span>
+                    <input
+                      className="input"
+                      value={teamForm.shortName}
+                      onChange={(event) =>
+                        setTeamForm((current) => ({
+                          ...current,
+                          shortName: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Country / region</span>
+                    <input
+                      className="input"
+                      value={teamForm.country}
+                      onChange={(event) =>
+                        setTeamForm((current) => ({
+                          ...current,
+                          country: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Founded</span>
+                    <input
+                      className="input"
+                      type="number"
+                      value={teamForm.founded}
+                      onChange={(event) =>
+                        setTeamForm((current) => ({
+                          ...current,
+                          founded: Number(event.target.value),
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+                <label>
+                  <span>Base / venue</span>
+                  <input
+                    className="input"
+                    value={teamForm.venue}
+                    onChange={(event) =>
+                      setTeamForm((current) => ({
+                        ...current,
+                        venue: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>Badge URL</span>
+                  <input
+                    className="input"
+                    value={teamForm.badgeUrl}
+                    onChange={(event) =>
+                      setTeamForm((current) => ({
+                        ...current,
+                        badgeUrl: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <div className="inline-actions">
+                  <button className="button-primary" type="submit">
+                    {teamForm.id ? "Update team" : "Create team"}
+                  </button>
+                  <button
+                    className="button-ghost"
+                    onClick={resetTeamForm}
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </form>
+              <div className="stack-list">
+                {managedTeams.map((team) => (
+                  <div className="list-row" key={team.id}>
+                    <div>
+                      <strong>{team.name}</strong>
+                      <p className="muted-text">
+                        {team.country} · {team.venue}
+                      </p>
+                    </div>
+                    <div className="inline-actions">
+                      <button
+                        className="button-secondary"
+                        onClick={() =>
+                          setTeamForm({
+                            id: team.id,
+                            sportId: team.sportId,
+                            name: team.name,
+                            shortName: team.shortName,
+                            country: team.country,
+                            venue: team.venue,
+                            founded: team.founded,
+                            badgeUrl: team.badgeUrl,
+                          })
+                        }
+                        type="button"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="button-danger"
+                        onClick={() => {
+                          if (!window.confirm(`Delete ${team.name}?`)) {
+                            return;
+                          }
+
+                          void runMutation(
+                            () => api.deleteTeam(session.token, team.id),
+                            `Deleted ${team.name}.`,
+                            resetTeamForm,
+                          );
+                        }}
+                        type="button"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ManagementCard>
+
+            <ManagementCard
+              title="Players & staff"
+              subtitle="Manage roster profiles, roles, and team assignments"
+            >
+              <form className="form-stack" onSubmit={handleSavePerson}>
+                <label>
+                  <span>Full name</span>
+                  <input
+                    className="input"
+                    value={personForm.fullName}
+                    onChange={(event) =>
+                      setPersonForm((current) => ({
+                        ...current,
+                        fullName: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Primary role</span>
+                    <input
+                      className="input"
+                      value={personForm.primaryRole}
+                      onChange={(event) =>
+                        setPersonForm((current) => ({
+                          ...current,
+                          primaryRole: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Nationality / region</span>
+                    <input
+                      className="input"
+                      value={personForm.nationality}
+                      onChange={(event) =>
+                        setPersonForm((current) => ({
+                          ...current,
+                          nationality: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Birth date</span>
+                    <input
+                      className="input"
+                      type="date"
+                      value={personForm.birthDate}
+                      onChange={(event) =>
+                        setPersonForm((current) => ({
+                          ...current,
+                          birthDate: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Assigned team</span>
+                    <select
+                      className="input"
+                      value={personForm.teamId ?? ""}
+                      onChange={(event) =>
+                        setPersonForm((current) => ({
+                          ...current,
+                          teamId: event.target.value
+                            ? Number(event.target.value)
+                            : null,
+                        }))
+                      }
+                    >
+                      <option value="">Unassigned</option>
+                      {managedTeams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Squad role</span>
+                    <input
+                      className="input"
+                      value={personForm.squadRole}
+                      onChange={(event) =>
+                        setPersonForm((current) => ({
+                          ...current,
+                          squadRole: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Jersey / slot</span>
+                    <input
+                      className="input"
+                      type="number"
+                      value={personForm.shirtNumber ?? ""}
+                      onChange={(event) =>
+                        setPersonForm((current) => ({
+                          ...current,
+                          shirtNumber: event.target.value
+                            ? Number(event.target.value)
+                            : null,
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+                <label>
+                  <span>Bio</span>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={personForm.bio}
+                    onChange={(event) =>
+                      setPersonForm((current) => ({
+                        ...current,
+                        bio: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <div className="inline-actions">
+                  <button className="button-primary" type="submit">
+                    {personForm.id ? "Update profile" : "Create profile"}
+                  </button>
+                  <button
+                    className="button-ghost"
+                    onClick={resetPersonForm}
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </form>
+              <div className="stack-list">
+                {managedPeople.map((person) => (
+                  <div className="list-row" key={person.id}>
+                    <div>
+                      <strong>{person.fullName}</strong>
+                      <p className="muted-text">
+                        {person.role} · {person.nationality}
+                      </p>
+                    </div>
+                    <div className="inline-actions">
+                      <button
+                        className="button-secondary"
+                        onClick={() => {
+                          void handleEditPerson(person);
+                        }}
+                        type="button"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="button-danger"
+                        onClick={() => {
+                          if (!window.confirm(`Delete ${person.fullName}?`)) {
+                            return;
+                          }
+
+                          void runMutation(
+                            () => api.deletePerson(session.token, person.id),
+                            `Deleted ${person.fullName}.`,
+                            resetPersonForm,
+                          );
+                        }}
+                        type="button"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ManagementCard>
+
+            <ManagementCard
+              title="Series scheduler"
+              subtitle="Create and update scheduled or live series for tournament operations"
+            >
+              <form className="form-stack" onSubmit={handleSaveMatch}>
+                <label>
+                  <span>Tournament</span>
+                  <select
+                    className="input"
+                    value={matchForm.competitionId}
+                    onChange={(event) =>
+                      setMatchForm((current) => ({
+                        ...current,
+                        competitionId: Number(event.target.value),
+                      }))
+                    }
+                  >
+                    {managedCompetitions.map((competition) => (
+                      <option key={competition.id} value={competition.id}>
+                        {competition.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Home team</span>
+                    <select
+                      className="input"
+                      value={matchForm.homeTeamId}
+                      onChange={(event) =>
+                        setMatchForm((current) => ({
+                          ...current,
+                          homeTeamId: Number(event.target.value),
+                        }))
+                      }
+                    >
+                      {managedTeams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Away team</span>
+                    <select
+                      className="input"
+                      value={matchForm.awayTeamId}
+                      onChange={(event) =>
+                        setMatchForm((current) => ({
+                          ...current,
+                          awayTeamId: Number(event.target.value),
+                        }))
+                      }
+                    >
+                      {managedTeams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Kickoff / start time</span>
+                    <input
+                      className="input"
+                      type="datetime-local"
+                      value={matchForm.kickoffUtc}
+                      onChange={(event) =>
+                        setMatchForm((current) => ({
+                          ...current,
+                          kickoffUtc: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Status</span>
+                    <select
+                      className="input"
+                      value={matchForm.status}
+                      onChange={(event) =>
+                        setMatchForm((current) => ({
+                          ...current,
+                          status: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="Scheduled">Scheduled</option>
+                      <option value="Live">Live</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Paused">Paused</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="two-column single-entity-grid">
+                  <label>
+                    <span>Home score</span>
+                    <input
+                      className="input"
+                      type="number"
+                      value={matchForm.homeScore}
+                      onChange={(event) =>
+                        setMatchForm((current) => ({
+                          ...current,
+                          homeScore: Number(event.target.value),
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Away score</span>
+                    <input
+                      className="input"
+                      type="number"
+                      value={matchForm.awayScore}
+                      onChange={(event) =>
+                        setMatchForm((current) => ({
+                          ...current,
+                          awayScore: Number(event.target.value),
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+                <label>
+                  <span>Venue / stream stage</span>
+                  <input
+                    className="input"
+                    value={matchForm.venue}
+                    onChange={(event) =>
+                      setMatchForm((current) => ({
+                        ...current,
+                        venue: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <div className="inline-actions">
+                  <button className="button-primary" type="submit">
+                    {matchForm.id ? "Update series" : "Create series"}
+                  </button>
+                  <button
+                    className="button-ghost"
+                    onClick={resetMatchForm}
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </form>
+              <div className="stack-list">
+                {managedMatches.map((match) => (
+                  <div className="list-row" key={match.id}>
+                    <div>
+                      <strong>
+                        {match.homeTeam} vs {match.awayTeam}
+                      </strong>
+                      <p className="muted-text">
+                        {match.competition} · {match.status} ·{" "}
+                        {formatKickoff(match.kickoffUtc)}
+                      </p>
+                    </div>
+                    <div className="inline-actions">
+                      <button
+                        className="button-secondary"
+                        onClick={() =>
+                          setMatchForm({
+                            id: match.id,
+                            competitionId: match.competitionId,
+                            seasonId: match.seasonId,
+                            homeTeamId:
+                              managedTeams.find(
+                                (team) => team.name === match.homeTeam,
+                              )?.id ??
+                              managedTeams[0]?.id ??
+                              1,
+                            awayTeamId:
+                              managedTeams.find(
+                                (team) => team.name === match.awayTeam,
+                              )?.id ??
+                              managedTeams[1]?.id ??
+                              managedTeams[0]?.id ??
+                              1,
+                            kickoffUtc: toDateTimeLocalInputValue(
+                              match.kickoffUtc,
+                            ),
+                            status: match.status,
+                            homeScore: match.homeScore,
+                            awayScore: match.awayScore,
+                            venue: match.venue,
+                          })
+                        }
+                        type="button"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="button-danger"
+                        onClick={() => {
+                          if (
+                            !window.confirm(
+                              `Delete ${match.homeTeam} vs ${match.awayTeam}?`,
+                            )
+                          ) {
+                            return;
+                          }
+
+                          void runMutation(
+                            () => api.deleteMatch(session.token, match.id),
+                            `Deleted ${match.homeTeam} vs ${match.awayTeam}.`,
+                            resetMatchForm,
+                          );
+                        }}
+                        type="button"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ManagementCard>
+          </div>
+        )}
+      </section>
+
+      <section className="panel">
+        <SectionHeading
           title="Recent sync and audit activity"
-          subtitle="Seeded change log entries from the backend"
+          subtitle="Roster, stream, and schedule updates coming from the backend"
         />
         {loading ? (
           <p className="muted-text">Loading audit entries...</p>
-        ) : error ? (
-          <p className="error-text">{error}</p>
         ) : (
           <div className="stack-list">
             {changes.map((entry) => (
@@ -1146,6 +2426,45 @@ function AdminDashboardPage() {
       </section>
     </div>
   );
+}
+
+function ManagementCard({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+}) {
+  return (
+    <article className="detail-card management-card">
+      <h3>{title}</h3>
+      <p className="muted-text">{subtitle}</p>
+      <div className="page-stack management-card-body">{children}</div>
+    </article>
+  );
+}
+
+function toDateTimeLocalInputValue(value: string): string {
+  const date = new Date(value);
+  const offset = date.getTimezoneOffset();
+  return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 16);
+}
+
+function mergeMatches(liveMatches: Match[], upcomingMatches: Match[]) {
+  const ordered = new Map<number, Match>();
+  [...liveMatches, ...upcomingMatches]
+    .sort(
+      (left, right) =>
+        new Date(left.kickoffUtc).getTime() -
+        new Date(right.kickoffUtc).getTime(),
+    )
+    .forEach((match) => {
+      ordered.set(match.id, match);
+    });
+
+  return Array.from(ordered.values());
 }
 
 function ProtectedRoute({ children }: { children: ReactNode }) {

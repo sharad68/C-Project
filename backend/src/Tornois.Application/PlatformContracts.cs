@@ -157,6 +157,128 @@ public sealed class AdminUserUpsertRequest
     public bool IsActive { get; init; } = true;
 }
 
+public sealed class SportUpsertRequest
+{
+    [Required]
+    [MinLength(2)]
+    public string Name { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(2)]
+    [RegularExpression("^[a-z0-9-]+$")]
+    public string Slug { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(10)]
+    public string Description { get; init; } = string.Empty;
+
+    public bool IsOlympic { get; init; }
+}
+
+public sealed class CompetitionUpsertRequest
+{
+    [Range(1, int.MaxValue)]
+    public int SportId { get; init; }
+
+    [Required]
+    [MinLength(2)]
+    public string Name { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(2)]
+    public string Country { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(2)]
+    public string Format { get; init; } = string.Empty;
+
+    public bool IsCup { get; init; }
+
+    [Required]
+    [MinLength(2)]
+    public string SeasonName { get; init; } = string.Empty;
+
+    [Range(2000, 2100)]
+    public int YearStart { get; init; } = DateTime.UtcNow.Year;
+
+    [Range(2000, 2100)]
+    public int YearEnd { get; init; } = DateTime.UtcNow.Year;
+
+    public bool IsCurrent { get; init; } = true;
+}
+
+public sealed class TeamUpsertRequest
+{
+    [Range(1, int.MaxValue)]
+    public int SportId { get; init; }
+
+    [Required]
+    [MinLength(2)]
+    public string Name { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(2)]
+    public string ShortName { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(2)]
+    public string Country { get; init; } = string.Empty;
+
+    public string Venue { get; init; } = string.Empty;
+    public int Founded { get; init; } = DateTime.UtcNow.Year;
+    public string BadgeUrl { get; init; } = string.Empty;
+}
+
+public sealed class PersonUpsertRequest
+{
+    [Required]
+    [MinLength(2)]
+    public string FullName { get; init; } = string.Empty;
+
+    public string FirstName { get; init; } = string.Empty;
+    public string LastName { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(2)]
+    public string Nationality { get; init; } = string.Empty;
+
+    public DateOnly BirthDate { get; init; } = new(2000, 1, 1);
+
+    [Required]
+    [MinLength(2)]
+    public string PrimaryRole { get; init; } = string.Empty;
+
+    public string Bio { get; init; } = string.Empty;
+    public string PhotoUrl { get; init; } = string.Empty;
+    public int? TeamId { get; init; }
+    public int? ShirtNumber { get; init; }
+    public string SquadRole { get; init; } = "Starter";
+}
+
+public sealed class MatchUpsertRequest
+{
+    [Range(1, int.MaxValue)]
+    public int CompetitionId { get; init; }
+
+    public int? SeasonId { get; init; }
+
+    [Range(1, int.MaxValue)]
+    public int HomeTeamId { get; init; }
+
+    [Range(1, int.MaxValue)]
+    public int AwayTeamId { get; init; }
+
+    public DateTimeOffset KickoffUtc { get; init; } = DateTimeOffset.UtcNow.AddDays(1);
+
+    [Required]
+    [MinLength(2)]
+    public string Status { get; init; } = "Scheduled";
+
+    public int HomeScore { get; init; }
+    public int AwayScore { get; init; }
+    public string Venue { get; init; } = string.Empty;
+}
+
 public sealed record AdminIdentityDto(
     string UserName,
     string DisplayName,
@@ -190,4 +312,18 @@ public interface IAdminAuthService
     AdminIdentityDto? ValidateCredentials(string userName, string password);
     IReadOnlyList<AdminIdentityDto> GetAdmins();
     AdminIdentityDto UpsertAdminUser(AdminUserUpsertRequest request, string performedBy);
+}
+
+public interface ITournamentManagementService
+{
+    SportDto UpsertSport(int? sportId, SportUpsertRequest request, string performedBy);
+    void DeleteSport(int sportId, string performedBy);
+    CompetitionDto UpsertCompetition(int? competitionId, CompetitionUpsertRequest request, string performedBy);
+    void DeleteCompetition(int competitionId, string performedBy);
+    TeamDto UpsertTeam(int? teamId, TeamUpsertRequest request, string performedBy);
+    void DeleteTeam(int teamId, string performedBy);
+    PersonDto UpsertPerson(int? personId, PersonUpsertRequest request, string performedBy);
+    void DeletePerson(int personId, string performedBy);
+    MatchDto UpsertMatch(int? matchId, MatchUpsertRequest request, string performedBy);
+    void DeleteMatch(int matchId, string performedBy);
 }

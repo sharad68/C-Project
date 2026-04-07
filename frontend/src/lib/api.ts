@@ -148,6 +148,61 @@ export interface AdminUserUpsertRequest {
   isActive: boolean;
 }
 
+export interface SportUpsertRequest {
+  name: string;
+  slug: string;
+  description: string;
+  isOlympic: boolean;
+}
+
+export interface CompetitionUpsertRequest {
+  sportId: number;
+  name: string;
+  country: string;
+  format: string;
+  isCup: boolean;
+  seasonName: string;
+  yearStart: number;
+  yearEnd: number;
+  isCurrent: boolean;
+}
+
+export interface TeamUpsertRequest {
+  sportId: number;
+  name: string;
+  shortName: string;
+  country: string;
+  venue: string;
+  founded: number;
+  badgeUrl: string;
+}
+
+export interface PersonUpsertRequest {
+  fullName: string;
+  firstName: string;
+  lastName: string;
+  nationality: string;
+  birthDate: string;
+  primaryRole: string;
+  bio: string;
+  photoUrl: string;
+  teamId: number | null;
+  shirtNumber: number | null;
+  squadRole: string;
+}
+
+export interface MatchUpsertRequest {
+  competitionId: number;
+  seasonId?: number | null;
+  homeTeamId: number;
+  awayTeamId: number;
+  kickoffUtc: string;
+  status: string;
+  homeScore: number;
+  awayScore: number;
+  venue: string;
+}
+
 export interface ChangeLogEntry {
   id: number;
   action: string;
@@ -157,10 +212,27 @@ export interface ChangeLogEntry {
   summary: string;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "";
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
+function buildApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  if (!API_BASE_URL) {
+    return normalizedPath;
+  }
+
+  if (
+    normalizedPath === API_BASE_URL ||
+    normalizedPath.startsWith(`${API_BASE_URL}/`)
+  ) {
+    return normalizedPath;
+  }
+
+  return `${API_BASE_URL}${normalizedPath}`;
+}
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -182,6 +254,15 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     }
 
     throw new ApiError(message, response.status);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return undefined as T;
   }
 
   return (await response.json()) as T;
@@ -215,7 +296,7 @@ export const api = {
     request<StandingRow[]>(
       `/api/ranking/competitions/${competitionId}/standings`,
     ),
-  getPlayerRankings: (competitionId: number, category = "goals") =>
+  getPlayerRankings: (competitionId: number, category = "") =>
     request<PlayerRanking[]>(
       `/api/ranking/players?competitionId=${competitionId}&category=${encodeURIComponent(category)}`,
     ),
@@ -240,6 +321,102 @@ export const api = {
     }),
   getAdminChanges: (token: string) =>
     request<ChangeLogEntry[]>("/api/admin/changes", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  createSport: (token: string, payload: SportUpsertRequest) =>
+    request<Sport>("/api/admin/management/sports", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    }),
+  updateSport: (token: string, sportId: number, payload: SportUpsertRequest) =>
+    request<Sport>(`/api/admin/management/sports/${sportId}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    }),
+  deleteSport: (token: string, sportId: number) =>
+    request<void>(`/api/admin/management/sports/${sportId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  createCompetition: (token: string, payload: CompetitionUpsertRequest) =>
+    request<Competition>("/api/admin/management/competitions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    }),
+  updateCompetition: (
+    token: string,
+    competitionId: number,
+    payload: CompetitionUpsertRequest,
+  ) =>
+    request<Competition>(
+      `/api/admin/management/competitions/${competitionId}`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      },
+    ),
+  deleteCompetition: (token: string, competitionId: number) =>
+    request<void>(`/api/admin/management/competitions/${competitionId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  createTeam: (token: string, payload: TeamUpsertRequest) =>
+    request<Team>("/api/admin/management/teams", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    }),
+  updateTeam: (token: string, teamId: number, payload: TeamUpsertRequest) =>
+    request<Team>(`/api/admin/management/teams/${teamId}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    }),
+  deleteTeam: (token: string, teamId: number) =>
+    request<void>(`/api/admin/management/teams/${teamId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  createPerson: (token: string, payload: PersonUpsertRequest) =>
+    request<Person>("/api/admin/management/people", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    }),
+  updatePerson: (
+    token: string,
+    personId: number,
+    payload: PersonUpsertRequest,
+  ) =>
+    request<Person>(`/api/admin/management/people/${personId}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    }),
+  deletePerson: (token: string, personId: number) =>
+    request<void>(`/api/admin/management/people/${personId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  createMatch: (token: string, payload: MatchUpsertRequest) =>
+    request<Match>("/api/admin/management/matches", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    }),
+  updateMatch: (token: string, matchId: number, payload: MatchUpsertRequest) =>
+    request<Match>(`/api/admin/management/matches/${matchId}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    }),
+  deleteMatch: (token: string, matchId: number) =>
+    request<void>(`/api/admin/management/matches/${matchId}`, {
+      method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     }),
 };

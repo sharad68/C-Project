@@ -10,8 +10,10 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<SeededSportsPlatformService>();
         services.AddScoped<DatabaseBackedSportsPlatformService>();
+        services.AddScoped<TournamentManagementService>();
         services.AddScoped<ISportsPlatformService>(provider => provider.GetRequiredService<DatabaseBackedSportsPlatformService>());
         services.AddScoped<IAdminAuthService>(provider => provider.GetRequiredService<DatabaseBackedSportsPlatformService>());
+        services.AddScoped<ITournamentManagementService>(provider => provider.GetRequiredService<TournamentManagementService>());
         return services;
     }
 }
@@ -20,93 +22,96 @@ internal sealed class SeededSportsPlatformService : ISportsPlatformService, IAdm
 {
     private readonly IReadOnlyList<Sport> _sports =
     [
-        new(1, "Football", "football", "Live football coverage across leagues and cups.", true),
-        new(2, "Basketball", "basketball", "Top leagues, standings, and player leaderboards.", true),
-        new(3, "Cricket", "cricket", "International and franchise cricket schedules.", false)
+        new(1, "League of Legends", "league-of-legends", "Publisher-backed MOBA circuit with regional leagues and global finals.", true),
+        new(2, "Counter-Strike 2", "counter-strike-2", "Open FPS ecosystem built around majors, circuits, and qualifiers.", false),
+        new(3, "Valorant", "valorant", "Structured tactical shooter league with regional stages and Masters events.", true)
     ];
 
     private readonly IReadOnlyList<Competition> _competitions =
     [
-        new(101, 1, "Premier League", "England", "League", false),
-        new(102, 1, "UEFA Champions League", "Europe", "Cup", true),
-        new(201, 2, "NBA", "United States", "League", false),
-        new(301, 3, "Indian Premier League", "India", "League", false)
+        new(101, 1, "LEC Spring Split", "Europe", "League", false),
+        new(102, 1, "Mid-Season Invitational", "Global", "International", true),
+        new(201, 2, "PGL Major Copenhagen", "Denmark", "Major", true),
+        new(202, 2, "ESL Pro League", "Global", "League", false),
+        new(301, 3, "VCT EMEA Stage 1", "Europe", "League", false),
+        new(302, 3, "Valorant Masters Toronto", "Canada", "International", true)
     ];
 
     private readonly IReadOnlyList<Season> _seasons =
     [
-        new(1001, 101, "2025/26", 2025, 2026, true),
-        new(1002, 102, "2025/26", 2025, 2026, true),
-        new(2001, 201, "2025/26", 2025, 2026, true),
-        new(3001, 301, "2026", 2026, 2026, true)
+        new(1001, 101, "Spring 2026", 2026, 2026, true),
+        new(1002, 102, "2026", 2026, 2026, true),
+        new(2001, 201, "2026", 2026, 2026, true),
+        new(2002, 202, "Season 22", 2026, 2026, true),
+        new(3001, 301, "Stage 1 2026", 2026, 2026, true),
+        new(3002, 302, "2026", 2026, 2026, true)
     ];
 
     private readonly IReadOnlyList<Team> _teams =
     [
-        new(1, 1, "Arsenal", "ARS", "England", "Emirates Stadium", 1886, "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=200&q=80"),
-        new(2, 1, "Liverpool", "LIV", "England", "Anfield", 1892, "https://images.unsplash.com/photo-1518604666860-9ed391f76460?w=200&q=80"),
-        new(3, 1, "Real Madrid", "RMA", "Spain", "Santiago Bernabéu", 1902, "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=200&q=80"),
-        new(4, 2, "Boston Celtics", "BOS", "USA", "TD Garden", 1946, "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=200&q=80"),
-        new(5, 2, "Los Angeles Lakers", "LAL", "USA", "Crypto.com Arena", 1947, "https://images.unsplash.com/photo-1519861531473-9200262188bf?w=200&q=80"),
-        new(6, 3, "Mumbai Indians", "MI", "India", "Wankhede Stadium", 2008, "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=200&q=80")
+        new(1, 1, "T1", "T1", "South Korea", "LoL Park, Seoul", 2003, "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=200&q=80"),
+        new(2, 1, "G2 Esports", "G2", "Europe", "Berlin Team House", 2015, "https://images.unsplash.com/photo-1518604666860-9ed391f76460?w=200&q=80"),
+        new(3, 2, "Natus Vincere", "NAVI", "Ukraine", "NAVI Campus Kyiv", 2009, "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=200&q=80"),
+        new(4, 2, "Team Vitality", "VIT", "France", "V.Hive Paris", 2013, "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=200&q=80"),
+        new(5, 3, "Fnatic", "FNC", "United Kingdom", "London HQ", 2004, "https://images.unsplash.com/photo-1519861531473-9200262188bf?w=200&q=80"),
+        new(6, 3, "Sentinels", "SEN", "United States", "Los Angeles HQ", 2016, "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=200&q=80")
     ];
 
     private readonly IReadOnlyList<Person> _people =
     [
-        new(1, 1, "Bukayo Saka", "Forward", "England", new DateOnly(2001, 9, 5), 7, "Creative winger with elite 1v1 ability and strong final-third output.", "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=200&q=80"),
-        new(2, 1, "Martin Ødegaard", "Midfielder", "Norway", new DateOnly(1998, 12, 17), 8, "Ball-progressing playmaker and team captain.", "https://images.unsplash.com/photo-1508098682722-e99c643e7485?w=200&q=80"),
-        new(3, 2, "Virgil van Dijk", "Defender", "Netherlands", new DateOnly(1991, 7, 8), 4, "Dominant centre-back known for aerial control and leadership.", "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=200&q=80"),
-        new(4, 4, "Jayson Tatum", "Forward", "USA", new DateOnly(1998, 3, 3), 0, "Primary scoring option with two-way impact.", "https://images.unsplash.com/photo-1519766304817-4f37bda74a26?w=200&q=80"),
-        new(5, 5, "LeBron James", "Forward", "USA", new DateOnly(1984, 12, 30), 23, "Veteran playmaker and all-around leader.", "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=200&q=80"),
-        new(6, 6, "Jasprit Bumrah", "Bowler", "India", new DateOnly(1993, 12, 6), null, "Elite fast bowler with deceptive release and death-over accuracy.", "https://images.unsplash.com/photo-1543357480-c60d40007a3f?w=200&q=80")
+        new(1, 1, "Lee \"Faker\" Sang-hyeok", "Mid Laner", "South Korea", new DateOnly(1996, 5, 7), null, "Legendary shot-caller and franchise player for T1's League of Legends roster.", "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=200&q=80"),
+        new(2, 2, "Rasmus \"Caps\" Winther", "Mid Laner", "Denmark", new DateOnly(1999, 11, 17), null, "Aggressive playmaker known for high-pressure international performances.", "https://images.unsplash.com/photo-1508098682722-e99c643e7485?w=200&q=80"),
+        new(3, 3, "Oleksandr \"s1mple\" Kostyliev", "AWPer", "Ukraine", new DateOnly(1997, 10, 2), null, "Elite Counter-Strike superstar with unmatched clutch potential.", "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=200&q=80"),
+        new(4, 4, "Mathieu \"ZywOo\" Herbaut", "AWPer", "France", new DateOnly(2000, 11, 9), null, "Precision-focused star fragger anchoring Vitality's late-round setups.", "https://images.unsplash.com/photo-1519766304817-4f37bda74a26?w=200&q=80"),
+        new(5, 5, "Jake \"Boaster\" Howlett", "IGL", "United Kingdom", new DateOnly(1995, 5, 25), null, "Calm in-game leader coordinating Fnatic's tactical rounds and utility usage.", "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=200&q=80"),
+        new(6, 6, "Tyson \"TenZ\" Ngo", "Duelist", "Canada", new DateOnly(2001, 5, 5), null, "Explosive entry player known for opening duel wins and stream appeal.", "https://images.unsplash.com/photo-1543357480-c60d40007a3f?w=200&q=80")
     ];
 
     private readonly IReadOnlyList<Match> _matches =
     [
-        new(5001, 1, 101, 1001, 1, 2, DateTimeOffset.UtcNow.AddMinutes(-18), "Live", 2, 1, "Emirates Stadium",
+        new(5001, 1, 101, 1001, 1, 2, DateTimeOffset.UtcNow.AddMinutes(-12), "Live", 1, 0, "LoL Park, Seoul",
         [
-            new MatchEvent(11, "goal", "Bukayo Saka"),
-            new MatchEvent(19, "goal", "Luis Díaz"),
-            new MatchEvent(31, "goal", "Martin Ødegaard")
+            new MatchEvent(6, "first blood", "Faker opens the series with a solo kill in mid."),
+            new MatchEvent(18, "objective", "T1 secure soul point after a clean dragon fight."),
+            new MatchEvent(29, "baron", "G2 hold the base after a tense Baron standoff.")
         ]),
-        new(5002, 1, 102, 1002, 3, 1, DateTimeOffset.UtcNow.AddDays(1), "Scheduled", 0, 0, "Santiago Bernabéu",
+        new(5002, 2, 201, 2001, 3, 4, DateTimeOffset.UtcNow.AddDays(1), "Scheduled", 0, 0, "Royal Arena, Copenhagen",
         [
-            new MatchEvent(0, "preview", "Knockout clash loaded for tomorrow night")
+            new MatchEvent(0, "preview", "NAVI and Vitality headline tomorrow's major playoff slate.")
         ]),
-        new(5003, 2, 201, 2001, 4, 5, DateTimeOffset.UtcNow.AddHours(6), "Scheduled", 0, 0, "TD Garden",
+        new(5003, 3, 301, 3001, 5, 6, DateTimeOffset.UtcNow.AddHours(6), "Scheduled", 0, 0, "Riot Games Arena, Berlin",
         [
-            new MatchEvent(0, "preview", "Eastern conference heavyweight meeting")
+            new MatchEvent(0, "preview", "Fnatic and Sentinels meet in a high-pressure cross-regional showcase.")
         ]),
-        new(5004, 3, 301, 3001, 6, 6, DateTimeOffset.UtcNow.AddDays(2), "Scheduled", 0, 0, "Wankhede Stadium",
+        new(5004, 1, 102, 1002, 2, 1, DateTimeOffset.UtcNow.AddDays(2), "Scheduled", 0, 0, "MSI Main Stage",
         [
-            new MatchEvent(0, "preview", "Local derby-style franchise showcase")
+            new MatchEvent(0, "preview", "A rematch between G2 and T1 is lined up for the international stage.")
         ])
     ];
 
     private readonly IReadOnlyList<Standing> _standings =
     [
-        new(101, 1, 1, 29, 20, 5, 4, 61, 28, 65),
-        new(101, 2, 2, 29, 19, 6, 4, 58, 30, 63),
-        new(102, 3, 1, 8, 6, 1, 1, 18, 7, 19),
-        new(201, 4, 1, 62, 47, 0, 15, 7421, 7014, 94),
-        new(201, 5, 2, 62, 43, 0, 19, 7354, 7090, 86),
-        new(301, 6, 1, 12, 8, 0, 4, 2100, 1950, 16)
+        new(101, 1, 1, 9, 8, 0, 1, 18, 7, 24),
+        new(101, 2, 2, 9, 7, 0, 2, 15, 9, 21),
+        new(201, 4, 1, 5, 4, 0, 1, 10, 5, 12),
+        new(201, 3, 2, 5, 3, 0, 2, 8, 6, 9),
+        new(301, 5, 1, 4, 3, 0, 1, 7, 3, 9),
+        new(301, 6, 2, 4, 2, 0, 2, 5, 5, 6)
     ];
 
     private readonly IReadOnlyList<PlayerRanking> _playerRankings =
     [
-        new(101, 1, 1, "goals", 16),
-        new(101, 2, 2, "assists", 11),
-        new(201, 4, 1, "points", 28),
-        new(201, 5, 2, "assists", 9),
-        new(301, 6, 1, "wickets", 18)
+        new(101, 1, 1, "kills", 44),
+        new(101, 2, 2, "assists", 72),
+        new(201, 4, 1, "headshots", 23),
+        new(301, 6, 1, "acs", 267)
     ];
 
     private readonly IReadOnlyList<ChangeLogEntry> _changeLog =
     [
-        new(1, "sync", "matches.match", "system", DateTimeOffset.UtcNow.AddMinutes(-12), "Live score sync completed for 4 fixtures."),
-        new(2, "update", "teams.team", "editor", DateTimeOffset.UtcNow.AddHours(-3), "Updated venue metadata for Arsenal."),
-        new(3, "verify", "people.person", "superadmin", DateTimeOffset.UtcNow.AddDays(-1), "Confirmed profile enrichment for Jasprit Bumrah.")
+        new(1, "sync", "matches.match", "system", DateTimeOffset.UtcNow.AddMinutes(-12), "Live esports series sync completed for the current tournament slate."),
+        new(2, "update", "broadcast.match_broadcast", "editor", DateTimeOffset.UtcNow.AddHours(-3), "Published official stream metadata for VCT EMEA Stage 1."),
+        new(3, "verify", "people.person", "superadmin", DateTimeOffset.UtcNow.AddDays(-1), "Verified roster profile enrichment for Faker.")
     ];
 
     private readonly IReadOnlyList<AdminUser> _admins =

@@ -14,6 +14,6 @@ public sealed class RankingController(ISportsPlatformService platformService) : 
         => Ok(platformService.GetStandings(competitionId));
 
     [HttpGet("players")]
-    public ActionResult<IReadOnlyList<PlayerRankingDto>> GetPlayerRankings([FromQuery] int competitionId, [FromQuery] string category = "goals")
+    public ActionResult<IReadOnlyList<PlayerRankingDto>> GetPlayerRankings([FromQuery] int competitionId, [FromQuery] string category = "")
         => Ok(platformService.GetPlayerRankings(competitionId, category));
 }
