@@ -1,0 +1,6 @@
+@Tornois.Api_HostAddress = http://localhost:5003
+
+GET {{Tornois.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

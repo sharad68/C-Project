@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Tornois.Api/Tornois.Api.csproj" />
+    <Project Path="src/Tornois.Application/Tornois.Application.csproj" />
+    <Project Path="src/Tornois.Domain/Tornois.Domain.csproj" />
+    <Project Path="src/Tornois.Infrastructure/Tornois.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Tornois.Api.Tests/Tornois.Api.Tests.csproj" />
+  </Folder>
+</Solution>
