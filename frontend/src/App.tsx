@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   BrowserRouter,
   Link,
@@ -67,46 +67,46 @@ function AppShell() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [
-          sports,
-          competitions,
-          liveMatches,
-          upcomingMatches,
-          teams,
-          people,
-        ] = await Promise.all([
-          api.getSports(),
-          api.getCompetitions(),
-          api.getLiveMatches(),
-          api.getUpcomingMatches(),
-          api.getTeams(),
-          api.searchPeople(""),
-        ]);
+  const loadData = useCallback(async () => {
+    try {
+      const [
+        sports,
+        competitions,
+        liveMatches,
+        upcomingMatches,
+        teams,
+        people,
+      ] = await Promise.all([
+        api.getSports(),
+        api.getCompetitions(),
+        api.getLiveMatches(),
+        api.getUpcomingMatches(),
+        api.getTeams(),
+        api.searchPeople(""),
+      ]);
 
-        setData({
-          sports: sports.items,
-          competitions: competitions.items,
-          liveMatches,
-          upcomingMatches,
-          teams: teams.items,
-          people: people.items,
-        });
-      } catch (loadError) {
-        setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Unable to load the esports operations platform right now.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
+      setData({
+        sports: sports.items,
+        competitions: competitions.items,
+        liveMatches,
+        upcomingMatches,
+        teams: teams.items,
+        people: people.items,
+      });
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load the esports operations platform right now.",
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   return (
     <div className="app-shell">
@@ -213,7 +213,7 @@ function AppShell() {
               path="/admin"
               element={
                 <ProtectedRoute>
-                  <AdminDashboardPage />
+                  <AdminDashboardPage onDataChanged={loadData} />
                 </ProtectedRoute>
               }
             />
@@ -936,8 +936,11 @@ function AdminLoginPage() {
   );
 }
 
-function AdminDashboardPage() {
+type AdminTab = "overview" | "games" | "tournaments" | "teams" | "players" | "series" | "users";
+
+function AdminDashboardPage({ onDataChanged }: { onDataChanged: () => Promise<void> }) {
   const { session } = useAuth();
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [changes, setChanges] = useState<ChangeLogEntry[]>([]);
   const [admins, setAdmins] = useState<AdminIdentity[]>([]);
   const [managedSports, setManagedSports] = useState<Sport[]>([]);
@@ -1166,6 +1169,7 @@ function AdminDashboardPage() {
         reset();
       }
       await loadDashboard(false);
+      await onDataChanged();
       setSuccessMessage(message);
     } catch (mutationError) {
       setError(
@@ -1411,9 +1415,29 @@ function AdminDashboardPage() {
         </div>
         {successMessage ? <p className="muted-text">{successMessage}</p> : null}
         {error ? <p className="error-text">{error}</p> : null}
+        <nav className="admin-tabs">
+          {([
+            ["overview", "Overview"],
+            ["games", "Games"],
+            ["tournaments", "Tournaments"],
+            ["teams", "Teams"],
+            ["players", "Players"],
+            ["series", "Series"],
+            ...(isSuperadmin ? [["users", "Users"]] : []),
+          ] as [AdminTab, string][]).map(([id, label]) => (
+            <button
+              key={id}
+              className={`tab-button${activeTab === id ? " tab-active" : ""}`}
+              onClick={() => setActiveTab(id)}
+              type="button"
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
       </section>
 
-      {isSuperadmin ? (
+      {activeTab === "users" && isSuperadmin ? (
         <section className="panel">
           <SectionHeading
             title="Admin user management"
@@ -1499,15 +1523,12 @@ function AdminDashboardPage() {
         </section>
       ) : null}
 
-      <section className="panel">
-        <SectionHeading
-          title="Tournament control center"
-          subtitle="Full CRUD operations for game titles, tournaments, teams, players, and series"
-        />
-        {loading ? (
-          <p className="muted-text">Loading management tools...</p>
+      {activeTab !== "overview" && activeTab !== "users" && (
+        loading ? (
+          <StatePanel title="Loading management tools" message="Fetching data..." />
         ) : (
-          <div className="management-grid">
+          <>
+            {activeTab === "games" && (
             <ManagementCard
               title="Game titles"
               subtitle="Create and maintain the esports titles available on the platform"
@@ -1627,7 +1648,9 @@ function AdminDashboardPage() {
                 ))}
               </div>
             </ManagementCard>
+            )}
 
+            {activeTab === "tournaments" && (
             <ManagementCard
               title="Tournaments"
               subtitle="Manage leagues, stages, and the current competitive season"
@@ -1815,7 +1838,9 @@ function AdminDashboardPage() {
                 ))}
               </div>
             </ManagementCard>
+            )}
 
+            {activeTab === "teams" && (
             <ManagementCard
               title="Teams"
               subtitle="Register organizations, brand info, and team headquarters"
@@ -1986,7 +2011,9 @@ function AdminDashboardPage() {
                 ))}
               </div>
             </ManagementCard>
+            )}
 
+            {activeTab === "players" && (
             <ManagementCard
               title="Players & staff"
               subtitle="Manage roster profiles, roles, and team assignments"
@@ -2170,7 +2197,9 @@ function AdminDashboardPage() {
                 ))}
               </div>
             </ManagementCard>
+            )}
 
+            {activeTab === "series" && (
             <ManagementCard
               title="Series scheduler"
               subtitle="Create and update scheduled or live series for tournament operations"
@@ -2397,10 +2426,12 @@ function AdminDashboardPage() {
                 ))}
               </div>
             </ManagementCard>
-          </div>
-        )}
-      </section>
+            )}
+          </>
+        )
+      )}
 
+      {activeTab === "overview" && (
       <section className="panel">
         <SectionHeading
           title="Recent sync and audit activity"
@@ -2424,6 +2455,7 @@ function AdminDashboardPage() {
           </div>
         )}
       </section>
+      )}
     </div>
   );
 }
@@ -2438,7 +2470,7 @@ function ManagementCard({
   children: ReactNode;
 }) {
   return (
-    <article className="detail-card management-card">
+    <article className="panel management-card">
       <h3>{title}</h3>
       <p className="muted-text">{subtitle}</p>
       <div className="page-stack management-card-body">{children}</div>
